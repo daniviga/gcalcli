@@ -813,66 +813,72 @@ class gcalcli:
             if cmd == 'calm' and curMonth != event['s'].strftime("%b"):
                 continue
 
-            dayNum = int(event['s'].strftime("%w"))
-            if self.calMonday:
-                dayNum -= 1
-                if dayNum < 0:
-                    dayNum = 6
+            dayStart = int(event['s'].strftime("%w"))
+            dayEnd = int(event['e'].strftime("%w"))
 
-            if event['s'] >= startDateTime and event['s'] < endDateTime:
+            # FIXME
+            for dayNum in range(dayStart,
+                                (dayEnd if dayEnd > dayStart else
+                                 7 if dayEnd != dayStart else dayEnd+1)):
+                if self.calMonday:
+                    dayNum -= 1
+                    if dayNum < 0:
+                        dayNum = 6
 
-                forceEventColorAsMarker = False
+                if event['s'] >= startDateTime and event['s'] < endDateTime:
 
-                allDay = self._IsAllDay(event)
+                    forceEventColorAsMarker = False
 
-                if not nowMarkerPrinted:
-                    if (DaysSinceEpoch(self.now) <
-                            DaysSinceEpoch(event['s'])):
-                        nowMarkerPrinted = True
-                        weekEventStrings[dayNum - 1] += \
-                            ("\n" +
-                             str(self.nowMarkerColor) +
-                             (self.calWidth * '-'))
-                    elif self.now <= event['s']:
-                        # add a line marker before next event
-                        nowMarkerPrinted = True
-                        weekEventStrings[dayNum] += \
-                            ("\n" +
-                             str(self.nowMarkerColor) +
-                             (self.calWidth * '-'))
-                    # We don't want to recolor all day events, but ignoring
-                    # them leads to issues where the "now" marker misprints
-                    # into the wrong day.  This resolves the issue by skipping
-                    # all day events for specific coloring but not for previous
-                    # or next events
-                    elif self.now >= event['s'] and \
-                            self.now <= event['e'] and \
-                            not allDay:
-                        # line marker is during the event (recolor event)
-                        nowMarkerPrinted = True
-                        forceEventColorAsMarker = True
+                    allDay = self._IsAllDay(event)
 
-                if allDay:
-                    tmpTimeStr = ''
-                elif self.military:
-                    tmpTimeStr = event['s'].strftime("%H:%M")
-                else:
-                    tmpTimeStr = \
-                        event['s'].strftime("%I:%M").lstrip('0') + \
-                        event['s'].strftime('%p').lower()
+                    if not nowMarkerPrinted:
+                        if (DaysSinceEpoch(self.now) <
+                                DaysSinceEpoch(event['s'])):
+                            nowMarkerPrinted = True
+                            weekEventStrings[dayNum - 1] += \
+                                ("\n" +
+                                 str(self.nowMarkerColor) +
+                                 (self.calWidth * '-'))
+                        elif self.now <= event['s']:
+                            # add a line marker before next event
+                            nowMarkerPrinted = True
+                            weekEventStrings[dayNum] += \
+                                ("\n" +
+                                 str(self.nowMarkerColor) +
+                                 (self.calWidth * '-'))
+                        # We don't want to recolor all day events, but ignoring
+                        # them leads to issues where the "now" marker misprints
+                        # into the wrong day.  This resolves the issue by skipping
+                        # all day events for specific coloring but not for previous
+                        # or next events
+                        elif self.now >= event['s'] and \
+                                self.now <= event['e'] and \
+                                not allDay:
+                            # line marker is during the event (recolor event)
+                            nowMarkerPrinted = True
+                            forceEventColorAsMarker = True
 
-                if forceEventColorAsMarker:
-                    eventColor = self.nowMarkerColor
-                else:
-                    eventColor = self._CalendarColor(event['gcalcli_cal'])
+                    if allDay:
+                        tmpTimeStr = ''
+                    elif self.military:
+                        tmpTimeStr = event['s'].strftime("%H:%M")
+                    else:
+                        tmpTimeStr = \
+                            event['s'].strftime("%I:%M").lstrip('0') + \
+                            event['s'].strftime('%p').lower()
 
-                # newline and empty string are the keys to turn off coloring
-                weekEventStrings[dayNum] += \
-                    "\n" + \
-                    stringToUnicode(str(eventColor)) + \
-                    stringToUnicode(tmpTimeStr.strip()) + \
-                    " " + \
-                    self._ValidTitle(event).strip()
+                    if forceEventColorAsMarker:
+                        eventColor = self.nowMarkerColor
+                    else:
+                        eventColor = self._CalendarColor(event['gcalcli_cal'])
+
+                    # newline and empty string are the keys to turn off coloring
+                    weekEventStrings[dayNum] += \
+                        "\n" + \
+                        stringToUnicode(str(eventColor)) + \
+                        stringToUnicode(tmpTimeStr.strip()) + \
+                        " " + \
+                        self._ValidTitle(event).strip()
 
         return weekEventStrings
 
